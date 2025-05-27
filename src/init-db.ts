@@ -20,7 +20,7 @@ export async function initializeDatabase() {
   // use for full-text search on the caption column
   await AppDataSource.query(`
         CREATE INDEX IF NOT EXISTS twitter_tweets_search_vector_idx
-        ON ${schema}.tweets USING gin (to_tsvector('english', tweetText));
+        ON ${schema}.tweets USING gin (to_tsvector('english', tweet_text));
     `);
 }
 // This function will be called when the script is run

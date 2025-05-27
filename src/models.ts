@@ -48,7 +48,7 @@ export class Tweet extends BaseEntity {
   @Column({ name: 'image_url', type: 'text' })
   imageUrl: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, name: 'tweet_text' })
   tweetText: string | null;
 
   @Column({

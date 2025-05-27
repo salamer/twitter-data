@@ -11,10 +11,10 @@ import {
   TsoaResponse,
   Get,
   SuccessResponse,
-} from 'tsoa';
-import { AppDataSource, User, Follow, Tweet } from './models';
-import type { JwtPayload } from './utils';
-import { TweetResponse } from './tweet.controller';
+} from "tsoa";
+import { AppDataSource, User, Follow, Tweet } from "./models";
+import type { JwtPayload } from "./utils";
+import { TweetResponse } from "./tweet.controller";
 
 interface UserProfileResponse {
   id: number;
@@ -26,30 +26,30 @@ interface UserProfileResponse {
   following: number;
 }
 
-@Route('users')
-@Tags('Users & Follows')
+@Route("users")
+@Tags("Users & Follows")
 export class UserController extends Controller {
-  @Security('jwt')
-  @SuccessResponse(200, 'Followed')
-  @Post('{userIdToFollow}/follow')
+  @Security("jwt")
+  @SuccessResponse(200, "Followed")
+  @Post("{userIdToFollow}/follow")
   public async followUser(
     @Request() req: Express.Request,
     @Path() userIdToFollow: number,
     @Res() notFound: TsoaResponse<404, { message: string }>,
     @Res() conflict: TsoaResponse<409, { message: string }>,
-    @Res() badRequest: TsoaResponse<400, { message: string }>,
+    @Res() badRequest: TsoaResponse<400, { message: string }>
   ): Promise<{ message: string }> {
     const currentUser = req.user as JwtPayload;
 
     if (currentUser.userId === userIdToFollow) {
-      return badRequest(400, { message: 'You cannot follow yourself.' });
+      return badRequest(400, { message: "You cannot follow yourself." });
     }
 
     const userToFollow = await AppDataSource.getRepository(User).findOneBy({
       id: userIdToFollow,
     });
     if (!userToFollow) {
-      return notFound(404, { message: 'User to follow not found.' });
+      return notFound(404, { message: "User to follow not found." });
     }
 
     const followRepo = AppDataSource.getRepository(Follow);
@@ -59,7 +59,7 @@ export class UserController extends Controller {
     });
 
     if (exists) {
-      return conflict(409, { message: 'You are already following this user.' });
+      return conflict(409, { message: "You are already following this user." });
     }
 
     const newFollow = followRepo.create({
@@ -72,13 +72,13 @@ export class UserController extends Controller {
     return { message: `Successfully followed user ${userIdToFollow}` };
   }
 
-  @Security('jwt')
-  @SuccessResponse(200, 'Unfollowed')
-  @Delete('{userIdToUnfollow}/unfollow')
+  @Security("jwt")
+  @SuccessResponse(200, "Unfollowed")
+  @Delete("{userIdToUnfollow}/unfollow")
   public async unfollowUser(
     @Request() req: Express.Request,
     @Path() userIdToUnfollow: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>,
+    @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<{ message: string }> {
     const currentUser = req.user as JwtPayload;
 
@@ -88,23 +88,23 @@ export class UserController extends Controller {
     });
 
     if (result.affected === 0) {
-      return notFound(404, { message: 'Follow relationship not found.' });
+      return notFound(404, { message: "Follow relationship not found." });
     }
 
     return { message: `Successfully unfollowed user ${userIdToUnfollow}` };
   }
 
-  @Get('{userId}/profile')
+  @Get("{userId}/profile")
   public async getUserProfile(
     @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>,
+    @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<UserProfileResponse> {
     const userRepo = AppDataSource.getRepository(User);
     const followRepo = AppDataSource.getRepository(Follow);
 
     const user = await userRepo.findOneBy({ id: userId });
     if (!user) {
-      return notFound(404, { message: 'User not found' });
+      return notFound(404, { message: "User not found" });
     }
 
     const followers = await followRepo.count({ where: { followedId: userId } });
@@ -121,81 +121,89 @@ export class UserController extends Controller {
     };
   }
 
-  @Get('{userId}/followers')
+  @Get("{userId}/followers")
   public async getUserFollowers(
     @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>,
+    @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<UserProfileResponse[]> {
     const followRepo = AppDataSource.getRepository(Follow);
     const userRepo = AppDataSource.getRepository(User);
 
     const followers = await followRepo.find({
       where: { followedId: userId },
-      relations: ['follower'],
+      relations: ["follower"],
     });
 
     if (followers.length === 0) {
-      return notFound(404, { message: 'No followers found for this user.' });
+      return notFound(404, { message: "No followers found for this user." });
     }
 
-    return followers.map((follow) => ({
-      id: follow.follower.id,
-      username: follow.follower.username,
-      bio: follow.follower.bio,
-      avatarUrl: follow.follower.avatarUrl,
-      createdAt: follow.follower.createdAt,
-      followers: 0, // Followers count not available in this context
-      following: 0, // Following count not available in this context
-    }));
+    return followers
+      .filter(
+        (follow) => follow.follower !== null && follow.follower.id !== null
+      )
+      .map((follow) => ({
+        id: follow.follower.id,
+        username: follow.follower.username,
+        bio: follow.follower.bio,
+        avatarUrl: follow.follower.avatarUrl,
+        createdAt: follow.follower.createdAt,
+        followers: 0, // Followers count not available in this context
+        following: 0, // Following count not available in this context
+      }));
   }
 
-  @Get('{userId}/following')
+  @Get("{userId}/following")
   public async getUserFollowing(
     @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>,
+    @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<UserProfileResponse[]> {
     const followRepo = AppDataSource.getRepository(Follow);
     const userRepo = AppDataSource.getRepository(User);
 
     const following = await followRepo.find({
       where: { followerId: userId },
-      relations: ['followed'],
+      relations: ["followed"],
     });
 
     if (following.length === 0) {
-      return notFound(404, { message: 'No following found for this user.' });
+      return notFound(404, { message: "No following found for this user." });
     }
 
-    return following.map((follow) => ({
-      id: follow.followed.id,
-      username: follow.followed.username,
-      bio: follow.followed.bio,
-      avatarUrl: follow.followed.avatarUrl,
-      createdAt: follow.followed.createdAt,
-      followers: 0, // Followers count not available in this context
-      following: 0, // Following count not available in this context
-    }));
+    return following
+      .filter(
+        (follow) => follow.followed !== null && follow.followed.id !== null
+      )
+      .map((follow) => ({
+        id: follow.followed.id,
+        username: follow.followed.username,
+        bio: follow.followed.bio,
+        avatarUrl: follow.followed.avatarUrl,
+        createdAt: follow.followed.createdAt,
+        followers: 0, // Followers count not available in this context
+        following: 0, // Following count not available in this context
+      }));
   }
 
-  @Get('{userId}/likes')
+  @Get("{userId}/likes")
   public async getUserLikes(
     @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>,
+    @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<TweetResponse[]> {
     const user = await AppDataSource.getRepository(User).findOneBy({
       id: userId,
     });
     if (!user) {
-      return notFound(404, { message: 'User not found' });
+      return notFound(404, { message: "User not found" });
     }
 
     const tweets = await AppDataSource.getRepository(Tweet).find({
       where: { userId },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (tweets.length === 0) {
-      return notFound(404, { message: 'No liked tweets found for this user.' });
+      return notFound(404, { message: "No liked tweets found for this user." });
     }
 
     return tweets.map((tweet) => ({
@@ -204,7 +212,7 @@ export class UserController extends Controller {
       tweetText: tweet.tweetText,
       createdAt: tweet.createdAt,
       userId: tweet.userId,
-      username: tweet.user?.username || 'unknown',
+      username: tweet.user?.username || "unknown",
       avatarUrl: tweet.user?.avatarUrl || null,
     }));
   }

@@ -48,6 +48,26 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CreateTweetBase64Input": {
+				"properties": {
+					"imageBase64": {
+						"type": "string"
+					},
+					"imageFileType": {
+						"type": "string"
+					},
+					"tweetText": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"imageBase64",
+					"imageFileType",
+					"tweetText"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"UserProfileResponse": {
 				"properties": {
 					"id": {
@@ -127,6 +147,18 @@
 					"username",
 					"avatarUrl",
 					"createdAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateCommentInput": {
+				"properties": {
+					"text": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"text"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -243,6 +275,76 @@
 	},
 	"paths": {
 		"/tweets": {
+			"post": {
+				"operationId": "CreateTweet",
+				"responses": {
+					"200": {
+						"description": "Tweet Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TweetResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Tweets"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTweetBase64Input"
+							}
+						}
+					}
+				}
+			},
 			"get": {
 				"operationId": "GetFeedTweets",
 				"responses": {
@@ -779,6 +881,68 @@
 				]
 			}
 		},
+		"/tweets/{tweetId}/like": {
+			"post": {
+				"operationId": "LikeTweet",
+				"responses": {
+					"201": {
+						"description": "Liked",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Interactions (Likes & Comments)"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "tweetId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
 		"/tweets/{tweetId}/unlike": {
 			"delete": {
 				"operationId": "UnlikeTweet",
@@ -824,6 +988,68 @@
 			}
 		},
 		"/tweets/{tweetId}/comments": {
+			"post": {
+				"operationId": "CreateComment",
+				"responses": {
+					"201": {
+						"description": "Comment Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CommentResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Interactions (Likes & Comments)"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "tweetId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateCommentInput"
+							}
+						}
+					}
+				}
+			},
 			"get": {
 				"operationId": "GetComments",
 				"responses": {

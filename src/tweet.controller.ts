@@ -1,7 +1,7 @@
 import {
   Body,
   Get,
-  Post as HttpPost,
+  Post,
   Route,
   Tags,
   Security,
@@ -12,16 +12,16 @@ import {
   Res,
   TsoaResponse,
   SuccessResponse,
-} from 'tsoa';
-import { AppDataSource } from './models';
-import { Tweet, User } from './models';
-import { uploadBase64ToObjectStorage } from './objectstorage.service';
-import type { JwtPayload } from './utils';
+} from "tsoa";
+import { AppDataSource } from "./models";
+import { Tweet, User } from "./models";
+import { uploadBase64ToObjectStorage } from "./objectstorage.service";
+import type { JwtPayload } from "./utils";
 
 export interface CreateTweetBase64Input {
   imageBase64: string;
   imageFileType: string;
-  tweetText?: string;
+  tweetText: string;
 }
 
 export interface TweetResponse {
@@ -34,23 +34,23 @@ export interface TweetResponse {
   avatarUrl: string | null;
 }
 
-@Route('tweets')
-@Tags('Tweets')
+@Route("tweets")
+@Tags("Tweets")
 export class TweetController extends Controller {
-  @Security('jwt')
-  @HttpPost('')
-  @SuccessResponse(200, 'Tweet Created')
+  @Security("jwt")
+  @Post("")
+  @SuccessResponse(200, "Tweet Created")
   public async createTweet(
     @Request() req: Express.Request,
     @Body() body: CreateTweetBase64Input,
     @Res() badRequestResponse: TsoaResponse<400, { message: string }>,
-    @Res() serverErrorResponse: TsoaResponse<500, { message: string }>,
+    @Res() serverErrorResponse: TsoaResponse<500, { message: string }>
   ): Promise<TweetResponse> {
     const currentUser = req.user as JwtPayload;
 
-    if (!body.imageBase64 || !body.imageFileType.startsWith('image/')) {
+    if (!body.imageBase64 || !body.imageFileType.startsWith("image/")) {
       return badRequestResponse(400, {
-        message: 'imageBase64 and a valid imageFileType are required.',
+        message: "imageBase64 and a valid imageFileType are required.",
       });
     }
 
@@ -63,7 +63,7 @@ export class TweetController extends Controller {
     try {
       const uploadResult = await uploadBase64ToObjectStorage(
         base64Data,
-        body.imageFileType,
+        body.imageFileType
       );
 
       const tweetRepo = AppDataSource.getRepository(Tweet);
@@ -81,61 +81,63 @@ export class TweetController extends Controller {
       this.setStatus(200);
       return {
         ...savedTweet,
-        username: user?.username || 'unknown',
+        username: user?.username || "unknown",
         avatarUrl: user?.avatarUrl || null,
       };
     } catch (error: any) {
-      console.error('Tweet creation failed:', error);
+      console.error("Tweet creation failed:", error);
       return serverErrorResponse(500, {
-        message: error.message || 'Failed to create tweet.',
+        message: error.message || "Failed to create tweet.",
       });
     }
   }
 
-  @Get('')
+  @Get("")
   public async getFeedTweets(
     @Query() limit: number = 10,
-    @Query() offset: number = 0,
+    @Query() offset: number = 0
   ): Promise<TweetResponse[]> {
     const tweets = await AppDataSource.getRepository(Tweet).find({
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
+      relations: ["user"],
+      order: { createdAt: "DESC" },
       take: limit,
       skip: offset,
     });
 
-    return tweets.map((tweet) => ({
-      id: tweet.id,
-      imageUrl: tweet.imageUrl,
-      tweetText: tweet.tweetText,
-      createdAt: tweet.createdAt,
-      userId: tweet.userId,
-      username: tweet.user?.username || 'unknown',
-      avatarUrl: tweet.user?.avatarUrl || null,
-    }));
+    return tweets
+      .filter((tweet) => tweet.user !== null && tweet.imageUrl !== null)
+      .map((tweet) => ({
+        id: tweet.id,
+        imageUrl: tweet.imageUrl,
+        tweetText: tweet.tweetText,
+        createdAt: tweet.createdAt,
+        userId: tweet.userId,
+        username: tweet.user?.username || "unknown",
+        avatarUrl: tweet.user?.avatarUrl || null,
+      }));
   }
 
-  @Get('search')
+  @Get("search")
   public async searchTweets(
     @Query() query: string,
     @Query() limit: number = 10,
     @Query() offset: number = 0,
-    @Res() badRequestResponse: TsoaResponse<400, { message: string }>,
+    @Res() badRequestResponse: TsoaResponse<400, { message: string }>
   ): Promise<TweetResponse[]> {
     if (!query.trim()) {
       return badRequestResponse(400, {
-        message: 'Search query cannot be empty',
+        message: "Search query cannot be empty",
       });
     }
-    const searchTerm = query.trim().split(/\s+/).join(' & ');
+    const searchTerm = query.trim().split(/\s+/).join(" & ");
 
     const tweets = await AppDataSource.getRepository(Tweet)
-      .createQueryBuilder('tweet')
-      .leftJoinAndSelect('tweet.user', 'user')
-      .where('to_tsvector(tweet.tweetText) @@ plainto_tsquery(:query)', {
+      .createQueryBuilder("tweets")
+      .leftJoinAndSelect("tweets.user", "user")
+      .where("to_tsvector(tweets.tweet_text) @@ plainto_tsquery(:query)", {
         query: searchTerm,
       })
-      .orderBy('tweet.createdAt', 'DESC')
+      .orderBy("tweets.createdAt", "DESC")
       .take(limit)
       .skip(offset)
       .getMany();
@@ -146,23 +148,23 @@ export class TweetController extends Controller {
       tweetText: tweet.tweetText,
       createdAt: tweet.createdAt,
       userId: tweet.userId,
-      username: tweet.user?.username || 'unknown',
+      username: tweet.user?.username || "unknown",
       avatarUrl: tweet.user?.avatarUrl || null,
     }));
   }
 
-  @Get('{tweetId}')
+  @Get("{tweetId}")
   public async getTweetById(
     @Path() tweetId: number,
-    @Res() notFoundResponse: TsoaResponse<404, { message: string }>,
+    @Res() notFoundResponse: TsoaResponse<404, { message: string }>
   ): Promise<TweetResponse> {
     const tweet = await AppDataSource.getRepository(Tweet).findOne({
       where: { id: tweetId },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (!tweet) {
-      return notFoundResponse(404, { message: 'Tweet not found' });
+      return notFoundResponse(404, { message: "Tweet not found" });
     }
 
     return {
@@ -171,7 +173,7 @@ export class TweetController extends Controller {
       tweetText: tweet.tweetText,
       createdAt: tweet.createdAt,
       userId: tweet.userId,
-      username: tweet.user?.username || 'unknown',
+      username: tweet.user?.username || "unknown",
       avatarUrl: tweet.user?.avatarUrl || null,
     };
   }

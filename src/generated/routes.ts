@@ -35,6 +35,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateTweetBase64Input": {
+        "dataType": "refObject",
+        "properties": {
+            "imageBase64": {"dataType":"string","required":true},
+            "imageFileType": {"dataType":"string","required":true},
+            "tweetText": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UserProfileResponse": {
         "dataType": "refObject",
         "properties": {
@@ -59,6 +69,14 @@ const models: TsoaRoute.Models = {
             "username": {"dataType":"string","required":true},
             "avatarUrl": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "createdAt": {"dataType":"datetime","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateCommentInput": {
+        "dataType": "refObject",
+        "properties": {
+            "text": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -118,6 +136,40 @@ export function RegisterRoutes(app: Router) {
 
 
     
+        const argsTweetController_createTweet: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                body: {"in":"body","name":"body","required":true,"ref":"CreateTweetBase64Input"},
+                badRequestResponse: {"in":"res","name":"400","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+                serverErrorResponse: {"in":"res","name":"500","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.post('/api/v1/tweets',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TweetController)),
+            ...(fetchMiddlewares<RequestHandler>(TweetController.prototype.createTweet)),
+
+            async function TweetController_createTweet(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTweetController_createTweet, request, response });
+
+                const controller = new TweetController();
+
+              await templateService.apiHandler({
+                methodName: 'createTweet',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTweetController_getFeedTweets: Record<string, TsoaRoute.ParameterSchema> = {
                 limit: {"default":10,"in":"query","name":"limit","dataType":"double"},
                 offset: {"default":0,"in":"query","name":"offset","dataType":"double"},
@@ -405,6 +457,39 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsInteractionController_likeTweet: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                tweetId: {"in":"path","name":"tweetId","required":true,"dataType":"double"},
+                notFoundResponse: {"in":"res","name":"404","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.post('/api/v1/tweets/:tweetId/like',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(InteractionController)),
+            ...(fetchMiddlewares<RequestHandler>(InteractionController.prototype.likeTweet)),
+
+            async function InteractionController_likeTweet(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsInteractionController_likeTweet, request, response });
+
+                const controller = new InteractionController();
+
+              await templateService.apiHandler({
+                methodName: 'likeTweet',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsInteractionController_unlikeTweet: Record<string, TsoaRoute.ParameterSchema> = {
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
                 tweetId: {"in":"path","name":"tweetId","required":true,"dataType":"double"},
@@ -431,6 +516,40 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsInteractionController_createComment: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                tweetId: {"in":"path","name":"tweetId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"CreateCommentInput"},
+                notFoundResponse: {"in":"res","name":"404","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.post('/api/v1/tweets/:tweetId/comments',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(InteractionController)),
+            ...(fetchMiddlewares<RequestHandler>(InteractionController.prototype.createComment)),
+
+            async function InteractionController_createComment(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsInteractionController_createComment, request, response });
+
+                const controller = new InteractionController();
+
+              await templateService.apiHandler({
+                methodName: 'createComment',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
               });
             } catch (err) {
                 return next(err);

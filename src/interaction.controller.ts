@@ -1,5 +1,5 @@
 import {
-  Post as HttpPost,
+  Post,
   Delete,
   Route,
   Tags,
@@ -36,7 +36,7 @@ export interface CommentResponse {
 export class InteractionController extends Controller {
   @Security('jwt')
   @SuccessResponse(201, 'Liked')
-  @HttpPost('like')
+  @Post('like')
   public async likeTweet(
     @Request() req: Express.Request,
     @Path() tweetId: number,
@@ -79,7 +79,7 @@ export class InteractionController extends Controller {
 
   @Security('jwt')
   @SuccessResponse(201, 'Comment Created')
-  @HttpPost('comments')
+  @Post('comments')
   public async createComment(
     @Request() req: Express.Request,
     @Path() tweetId: number,
