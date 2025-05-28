@@ -12,9 +12,10 @@ import {
   Get,
   SuccessResponse,
 } from "tsoa";
-import { AppDataSource, User, Follow, Tweet } from "./models";
+import { AppDataSource, User, Follow, Tweet, Like } from "./models";
 import type { JwtPayload } from "./utils";
 import { TweetResponse } from "./tweet.controller";
+import { In } from "typeorm";
 
 interface UserProfileResponse {
   id: number;
@@ -185,8 +186,10 @@ export class UserController extends Controller {
       }));
   }
 
+  @Security("jwt", ["optional"])
   @Get("{userId}/likes")
   public async getUserLikes(
+    @Request() req: Express.Request,
     @Path() userId: number,
     @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<TweetResponse[]> {
@@ -197,23 +200,40 @@ export class UserController extends Controller {
       return notFound(404, { message: "User not found" });
     }
 
-    const tweets = await AppDataSource.getRepository(Tweet).find({
+    const tweets = await AppDataSource.getRepository(Like).find({
       where: { userId },
-      relations: ["user"],
+      relations: ["user", "tweet"],
     });
 
     if (tweets.length === 0) {
       return notFound(404, { message: "No liked tweets found for this user." });
     }
 
-    return tweets.map((tweet) => ({
-      id: tweet.id,
-      imageUrl: tweet.imageUrl,
-      tweetText: tweet.tweetText,
-      createdAt: tweet.createdAt,
-      userId: tweet.userId,
-      username: tweet.user?.username || "unknown",
-      avatarUrl: tweet.user?.avatarUrl || null,
-    }));
+    const currentUser = req.user as JwtPayload;
+    const likedTweets =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              tweetId: In(tweets.map((t) => t.id)),
+            },
+          })
+        : [];
+
+    return tweets
+      .filter((tweet) => tweet.user !== null && tweet.tweet !== null)
+      .map((tweet) => ({
+        id: tweet.id,
+        imageUrl: tweet.tweet?.imageUrl,
+        tweetText: tweet.tweet?.tweetText,
+        createdAt: tweet.createdAt,
+        userId: tweet.userId,
+        username: tweet.user?.username || "unknown",
+        avatarUrl: tweet.user?.avatarUrl || null,
+        hasLiked: likedTweets.some(
+          (like) =>
+            like.tweetId === tweet.id && like.userId === currentUser?.userId
+        ),
+      }));
   }
 }

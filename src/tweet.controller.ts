@@ -13,10 +13,11 @@ import {
   TsoaResponse,
   SuccessResponse,
 } from "tsoa";
-import { AppDataSource } from "./models";
+import { AppDataSource, Like } from "./models";
 import { Tweet, User } from "./models";
 import { uploadBase64ToObjectStorage } from "./objectstorage.service";
 import type { JwtPayload } from "./utils";
+import { In } from "typeorm";
 
 export interface CreateTweetBase64Input {
   imageBase64: string;
@@ -32,6 +33,7 @@ export interface TweetResponse {
   userId: number;
   username: string;
   avatarUrl: string | null;
+  hasLiked: boolean;
 }
 
 @Route("tweets")
@@ -83,6 +85,7 @@ export class TweetController extends Controller {
         ...savedTweet,
         username: user?.username || "unknown",
         avatarUrl: user?.avatarUrl || null,
+        hasLiked: false, // Assuming no likes functionality implemented yet
       };
     } catch (error: any) {
       console.error("Tweet creation failed:", error);
@@ -92,8 +95,10 @@ export class TweetController extends Controller {
     }
   }
 
+  @Security("jwt", ["optional"])
   @Get("")
   public async getFeedTweets(
+    @Request() req: Express.Request,
     @Query() limit: number = 10,
     @Query() offset: number = 0
   ): Promise<TweetResponse[]> {
@@ -103,6 +108,17 @@ export class TweetController extends Controller {
       take: limit,
       skip: offset,
     });
+
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              tweetId: In(tweets.map((t) => t.id)),
+            },
+          })
+        : [];
 
     return tweets
       .filter((tweet) => tweet.user !== null && tweet.imageUrl !== null)
@@ -114,11 +130,17 @@ export class TweetController extends Controller {
         userId: tweet.userId,
         username: tweet.user?.username || "unknown",
         avatarUrl: tweet.user?.avatarUrl || null,
+        hasLiked: likes.some(
+          (like) =>
+            like.tweetId === tweet.id && like.userId === currentUser?.userId
+        ),
       }));
   }
 
+  @Security("jwt", ["optional"])
   @Get("search")
   public async searchTweets(
+    @Request() req: Express.Request,
     @Query() query: string,
     @Query() limit: number = 10,
     @Query() offset: number = 0,
@@ -142,6 +164,17 @@ export class TweetController extends Controller {
       .skip(offset)
       .getMany();
 
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              tweetId: In(tweets.map((t) => t.id)),
+            },
+          })
+        : [];
+
     return tweets.map((tweet) => ({
       id: tweet.id,
       imageUrl: tweet.imageUrl,
@@ -150,11 +183,17 @@ export class TweetController extends Controller {
       userId: tweet.userId,
       username: tweet.user?.username || "unknown",
       avatarUrl: tweet.user?.avatarUrl || null,
+      hasLiked: likes.some(
+        (like) =>
+          like.tweetId === tweet.id && like.userId === currentUser?.userId
+      ),
     }));
   }
 
+  @Security("jwt", ["optional"])
   @Get("{tweetId}")
   public async getTweetById(
+    @Request() req: Express.Request,
     @Path() tweetId: number,
     @Res() notFoundResponse: TsoaResponse<404, { message: string }>
   ): Promise<TweetResponse> {
@@ -167,6 +206,17 @@ export class TweetController extends Controller {
       return notFoundResponse(404, { message: "Tweet not found" });
     }
 
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              tweetId: tweet.id,
+            },
+          })
+        : [];
+
     return {
       id: tweet.id,
       imageUrl: tweet.imageUrl,
@@ -175,6 +225,10 @@ export class TweetController extends Controller {
       userId: tweet.userId,
       username: tweet.user?.username || "unknown",
       avatarUrl: tweet.user?.avatarUrl || null,
+      hasLiked: likes.some(
+        (like) =>
+          like.tweetId === tweet.id && like.userId === currentUser?.userId
+      ),
     };
   }
 }
