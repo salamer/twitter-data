@@ -18,6 +18,7 @@ import { Tweet, User } from "./models";
 import { uploadBase64ToObjectStorage } from "./objectstorage.service";
 import type { JwtPayload } from "./utils";
 import { In } from "typeorm";
+import { getCurrentUser } from "./auth.middleware";
 
 export interface CreateTweetBase64Input {
   imageBase64: string;
@@ -39,7 +40,7 @@ export interface TweetResponse {
 @Route("tweets")
 @Tags("Tweets")
 export class TweetController extends Controller {
-  @Security("jwt")
+  // @Security("jwt")
   @Post("")
   @SuccessResponse(200, "Tweet Created")
   public async createTweet(
@@ -48,7 +49,8 @@ export class TweetController extends Controller {
     @Res() badRequestResponse: TsoaResponse<400, { message: string }>,
     @Res() serverErrorResponse: TsoaResponse<500, { message: string }>
   ): Promise<TweetResponse> {
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
 
     if (!body.imageBase64 || !body.imageFileType.startsWith("image/")) {
       return badRequestResponse(400, {
@@ -95,7 +97,7 @@ export class TweetController extends Controller {
     }
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("")
   public async getFeedTweets(
     @Request() req: Express.Request,
@@ -109,7 +111,8 @@ export class TweetController extends Controller {
       skip: offset,
     });
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({
@@ -137,7 +140,7 @@ export class TweetController extends Controller {
       }));
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("search")
   public async searchTweets(
     @Request() req: Express.Request,
@@ -164,7 +167,8 @@ export class TweetController extends Controller {
       .skip(offset)
       .getMany();
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({
@@ -190,7 +194,7 @@ export class TweetController extends Controller {
     }));
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("{tweetId}")
   public async getTweetById(
     @Request() req: Express.Request,
@@ -206,7 +210,8 @@ export class TweetController extends Controller {
       return notFoundResponse(404, { message: "Tweet not found" });
     }
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({

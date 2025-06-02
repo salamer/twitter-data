@@ -166,96 +166,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"UserPublicProfile": {
-				"properties": {
-					"id": {
-						"type": "number",
-						"format": "double"
-					},
-					"username": {
-						"type": "string"
-					},
-					"email": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"id",
-					"username",
-					"email"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"UserRegistrationInput": {
-				"properties": {
-					"username": {
-						"type": "string"
-					},
-					"email": {
-						"type": "string"
-					},
-					"password": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"username",
-					"email",
-					"password"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"AuthResponse": {
-				"properties": {
-					"user": {
-						"properties": {
-							"email": {
-								"type": "string"
-							},
-							"username": {
-								"type": "string"
-							},
-							"id": {
-								"type": "number",
-								"format": "double"
-							}
-						},
-						"required": [
-							"email",
-							"username",
-							"id"
-						],
-						"type": "object"
-					},
-					"token": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"user",
-					"token"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"UserLoginInput": {
-				"properties": {
-					"email": {
-						"type": "string"
-					},
-					"password": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"email",
-					"password"
-				],
-				"type": "object",
-				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -332,11 +242,7 @@
 				"tags": [
 					"Tweets"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -369,13 +275,7 @@
 				"tags": [
 					"Tweets"
 				],
-				"security": [
-					{
-						"jwt": [
-							"optional"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "query",
@@ -439,13 +339,7 @@
 				"tags": [
 					"Tweets"
 				],
-				"security": [
-					{
-						"jwt": [
-							"optional"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "query",
@@ -514,13 +408,7 @@
 				"tags": [
 					"Tweets"
 				],
-				"security": [
-					{
-						"jwt": [
-							"optional"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -614,11 +502,7 @@
 				"tags": [
 					"Users & Follows"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -676,11 +560,7 @@
 				"tags": [
 					"Users & Follows"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -760,24 +640,6 @@
 								}
 							}
 						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
 					}
 				},
 				"tags": [
@@ -810,24 +672,6 @@
 										"$ref": "#/components/schemas/UserProfileResponse"
 									},
 									"type": "array"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
 								}
 							}
 						}
@@ -889,13 +733,7 @@
 				"tags": [
 					"Users & Follows"
 				],
-				"security": [
-					{
-						"jwt": [
-							"optional"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -953,11 +791,7 @@
 				"tags": [
 					"Interactions (Likes & Comments)"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -997,11 +831,7 @@
 				"tags": [
 					"Interactions (Likes & Comments)"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -1051,11 +881,7 @@
 				"tags": [
 					"Interactions (Likes & Comments)"
 				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -1148,124 +974,6 @@
 						}
 					}
 				]
-			}
-		},
-		"/auth/register": {
-			"post": {
-				"operationId": "Register",
-				"responses": {
-					"201": {
-						"description": "User Created",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UserPublicProfile"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Authentication"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/UserRegistrationInput"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/auth/login": {
-			"post": {
-				"operationId": "Login",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/AuthResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Authentication"
-				],
-				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/UserLoginInput"
-							}
-						}
-					}
-				}
 			}
 		}
 	},

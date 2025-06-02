@@ -16,6 +16,7 @@ import { AppDataSource, User, Follow, Tweet, Like } from "./models";
 import type { JwtPayload } from "./utils";
 import { TweetResponse } from "./tweet.controller";
 import { In } from "typeorm";
+import { getCurrentUser } from "./auth.middleware";
 
 interface UserProfileResponse {
   id: number;
@@ -30,7 +31,7 @@ interface UserProfileResponse {
 @Route("users")
 @Tags("Users & Follows")
 export class UserController extends Controller {
-  @Security("jwt")
+  // @Security("jwt")
   @SuccessResponse(200, "Followed")
   @Post("{userIdToFollow}/follow")
   public async followUser(
@@ -40,7 +41,8 @@ export class UserController extends Controller {
     @Res() conflict: TsoaResponse<409, { message: string }>,
     @Res() badRequest: TsoaResponse<400, { message: string }>
   ): Promise<{ message: string }> {
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
 
     if (currentUser.userId === userIdToFollow) {
       return badRequest(400, { message: "You cannot follow yourself." });
@@ -73,7 +75,7 @@ export class UserController extends Controller {
     return { message: `Successfully followed user ${userIdToFollow}` };
   }
 
-  @Security("jwt")
+  // @Security("jwt")
   @SuccessResponse(200, "Unfollowed")
   @Delete("{userIdToUnfollow}/unfollow")
   public async unfollowUser(
@@ -81,7 +83,8 @@ export class UserController extends Controller {
     @Path() userIdToUnfollow: number,
     @Res() notFound: TsoaResponse<404, { message: string }>
   ): Promise<{ message: string }> {
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
 
     const result = await AppDataSource.getRepository(Follow).delete({
       followerId: currentUser.userId,
@@ -124,8 +127,7 @@ export class UserController extends Controller {
 
   @Get("{userId}/followers")
   public async getUserFollowers(
-    @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>
+    @Path() userId: number
   ): Promise<UserProfileResponse[]> {
     const followRepo = AppDataSource.getRepository(Follow);
     const userRepo = AppDataSource.getRepository(User);
@@ -136,7 +138,7 @@ export class UserController extends Controller {
     });
 
     if (followers.length === 0) {
-      return notFound(404, { message: "No followers found for this user." });
+      return [];
     }
 
     return followers
@@ -156,8 +158,7 @@ export class UserController extends Controller {
 
   @Get("{userId}/following")
   public async getUserFollowing(
-    @Path() userId: number,
-    @Res() notFound: TsoaResponse<404, { message: string }>
+    @Path() userId: number
   ): Promise<UserProfileResponse[]> {
     const followRepo = AppDataSource.getRepository(Follow);
     const userRepo = AppDataSource.getRepository(User);
@@ -168,7 +169,7 @@ export class UserController extends Controller {
     });
 
     if (following.length === 0) {
-      return notFound(404, { message: "No following found for this user." });
+      return [];
     }
 
     return following
@@ -186,7 +187,7 @@ export class UserController extends Controller {
       }));
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("{userId}/likes")
   public async getUserLikes(
     @Request() req: Express.Request,
@@ -206,10 +207,11 @@ export class UserController extends Controller {
     });
 
     if (tweets.length === 0) {
-      return notFound(404, { message: "No liked tweets found for this user." });
+      return [];
     }
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likedTweets =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({
